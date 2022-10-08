@@ -1,7 +1,7 @@
 package com.test.oneio.service.Impl;
 
 import com.test.oneio.model.FizzBuzzGameModel;
-import com.test.oneio.model.FizzBuzzGameResponseModel;
+import com.test.oneio.model.FizzBuzzGameResponseEnum;
 import com.test.oneio.service.FizzBuzzInterface;
 
 import java.util.List;
@@ -14,33 +14,27 @@ import org.springframework.stereotype.Service;
 public class FizzBuzzService implements FizzBuzzInterface
 {   
     @Override
-    public List<String> playGame(int n) throws RuntimeException {
-        // TODO: list is bottleneck for parallelism? 
-        // [https://stackoverflow.com/questions/68911336/size-of-arraylist-modified-by-parallel-stream]
-        // TODO: what is the max value of n?
-        if(n > Integer.MAX_VALUE || n <  Integer.MIN_VALUE) {
-            throw new IllegalArgumentException("Input is out of range!");
+    public List<String> playGame(int start, int end) throws RuntimeException {
+        if (start < 1 || end < 1 || start > end || end > Integer.MAX_VALUE || ((end - start) > 100)) {
+            throw new IllegalArgumentException("Invalid input!");
         }
-        return IntStream.rangeClosed(1, n)
+        return IntStream.rangeClosed(start, end)
                 .parallel()
                 .mapToObj(this::fizzBuzzGame)
                 .collect(Collectors.toList());
     }
 
     private String fizzBuzzGame(int num) {
-        FizzBuzzGameModel model = new FizzBuzzGameModel();
 
-        boolean fizzDivisible = num % model.getFIZZ_NUMBER() == 0;
-        boolean buzzDivisible = num % model.getBUZZ_NUMBER() == 0;
-
-        FizzBuzzGameResponseModel responseModel = new FizzBuzzGameResponseModel();
+        boolean fizzDivisible = num % FizzBuzzGameModel.FIZZ_NUMBER == 0;
+        boolean buzzDivisible = num % FizzBuzzGameModel.BUZZ_NUMBER == 0;
 
         if(fizzDivisible && buzzDivisible) {
-            return responseModel.getFizzBuzz();
+            return FizzBuzzGameResponseEnum.FizzBuzz.name();
         } else if(fizzDivisible) {
-            return responseModel.getFizz();
+            return FizzBuzzGameResponseEnum.Fizz.name();
         } else if(buzzDivisible) {
-            return responseModel.getBuzz();
+            return FizzBuzzGameResponseEnum.Buzz.name();
         } else {
             return String.valueOf(num);
         }
