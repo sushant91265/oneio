@@ -16,10 +16,12 @@ public class FizzBuzzController {
 	@Autowired
     private FizzBuzzService fizzBuzzService;
 
+    // TODO when to use queryparam vs body?
     @GetMapping("/v1/fizzbuzz")
     public ResponseEntity<?> playFizzBuzzGame(@RequestParam int start, @RequestParam int end) {
         log.info("Fizzbuzz game start!");
         log.debug("start: {}, end: {}", start, end);
+        // TODO send response in json format
         return ResponseEntity.ok(fizzBuzzService.playGame(start, end));
     }
 }
