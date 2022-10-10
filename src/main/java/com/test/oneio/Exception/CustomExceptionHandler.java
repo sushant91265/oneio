@@ -1,32 +1,28 @@
 package com.test.oneio.Exception;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.validation.ConstraintViolationException;
-
-import org.springframework.http.HttpHeaders;
+import javax.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-@ControllerAdvice
+import com.test.oneio.model.ErrorResponse;
+
+/*
+ * CustomExceptionHandler acts as a global exception handler for exceptions thrown by the application and 
+ * can be enhanced to handle more exceptions.
+ */
+@RestControllerAdvice
 public class CustomExceptionHandler extends ResponseEntityExceptionHandler 
 {
-  @ExceptionHandler(IllegalArgumentException.class)
-  protected final ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException ex,
-                        WebRequest request) {
-    List<String> details = new ArrayList<>();
-    details.add(ex.getLocalizedMessage());
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(details);
+  @ExceptionHandler(GameException.class)
+  protected final ResponseEntity<?> handleGameException(HttpServletRequest request, Throwable ex) {
+    return new ResponseEntity<>(new ErrorResponse(ex.getMessage(), 404), HttpStatus.BAD_REQUEST);
   }
 
-  @ExceptionHandler({ ConstraintViolationException.class })
-    public ResponseEntity<Object> handleBadRequest(ConstraintViolationException ex, WebRequest request) {
-        final String bodyOfResponse = "This should be application specific!";
-        return handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
-    }
+  @ExceptionHandler({ Exception.class })
+  protected final ResponseEntity<Object> handleAll(HttpServletRequest request, Throwable ex) {
+    return new ResponseEntity<>(new ErrorResponse(ex.getMessage(), 500), HttpStatus.INTERNAL_SERVER_ERROR);
+  }
 }

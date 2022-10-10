@@ -8,20 +8,23 @@ import org.springframework.web.bind.annotation.*;
 
 import com.test.oneio.service.Impl.FizzBuzzService;
 
+/*
+ * Controller class for FizzBuzz exposing GET API [/games/v1/fizzbuzz?start=1&size=99]
+ */
 @RestController
 @RequestMapping("/games")
+@CrossOrigin
 @Slf4j
 public class FizzBuzzController {
 
 	@Autowired
     private FizzBuzzService fizzBuzzService;
 
-    // TODO when to use queryparam vs body?
     @GetMapping("/v1/fizzbuzz")
-    public ResponseEntity<?> playFizzBuzzGame(@RequestParam int start, @RequestParam int end) {
+    public ResponseEntity<?> playFizzBuzzGame(
+        @RequestParam(required = true) int start, @RequestParam(defaultValue = "0") int size) {
         log.info("Fizzbuzz game start!");
-        log.debug("start: {}, end: {}", start, end);
-        // TODO send response in json format
-        return ResponseEntity.ok(fizzBuzzService.playGame(start, end));
+        log.debug("Start: " + start + ", size: " + size);
+        return ResponseEntity.ok(fizzBuzzService.playGame(start, size));
     }
 }

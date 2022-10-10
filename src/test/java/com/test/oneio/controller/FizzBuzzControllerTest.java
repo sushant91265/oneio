@@ -15,8 +15,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.test.oneio.model.FizzBuzzGameResponseModel;
 import com.test.oneio.service.Impl.FizzBuzzService;
 
+/*
+ * FizzBuzzControllerTest is the test class for FizzBuzzController, testing the 
+ * api calls
+ */
 @ExtendWith(SpringExtension.class)
 @AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(value = FizzBuzzController.class)
@@ -30,8 +35,32 @@ public class FizzBuzzControllerTest {
     
     @Test
     public void testFizzBuzzController() throws Exception {
-        Mockito.when(fizzBuzzService.playGame(Mockito.anyInt(), Mockito.anyInt())).thenReturn(Collections.singletonList("1"));
-        mockMvc.perform(MockMvcRequestBuilders.get("/games/v1/fizzbuzz?start=1&end=3")
+        FizzBuzzGameResponseModel response = new FizzBuzzGameResponseModel(Collections.singletonList("1"));
+        Mockito.when(fizzBuzzService.playGame(Mockito.anyInt(), Mockito.anyInt())).thenReturn(response);
+        mockMvc.perform(MockMvcRequestBuilders.get("/games/v1/fizzbuzz")
+                        .queryParam("start", "1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        Mockito.verify(fizzBuzzService, Mockito.times(1)).playGame(Mockito.anyInt(), Mockito.anyInt());
+    }
+
+    @Test
+    public void testFizzBuzzControllerWith2Params() throws Exception {
+        FizzBuzzGameResponseModel response = new FizzBuzzGameResponseModel(Collections.singletonList("1"));
+        Mockito.when(fizzBuzzService.playGame(Mockito.anyInt(), Mockito.anyInt())).thenReturn(response);
+        mockMvc.perform(MockMvcRequestBuilders.get("/games/v1/fizzbuzz?start=3&size=2")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        Mockito.verify(fizzBuzzService, Mockito.times(1)).playGame(Mockito.anyInt(), Mockito.anyInt());
+    }
+
+    @Test
+    public void testFizzBuzzControllerDoNotThrowException() throws Exception {
+        FizzBuzzGameResponseModel response = new FizzBuzzGameResponseModel(Collections.singletonList("1"));
+        Mockito.when(fizzBuzzService.playGame(Mockito.anyInt(), Mockito.anyInt())).thenReturn(response);
+        mockMvc.perform(MockMvcRequestBuilders.get("/games/v1/fizzbuzz?start=0")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());

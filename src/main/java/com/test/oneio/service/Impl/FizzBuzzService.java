@@ -1,7 +1,9 @@
 package com.test.oneio.service.Impl;
 
+import com.test.oneio.Exception.GameException;
 import com.test.oneio.model.FizzBuzzGameModel;
 import com.test.oneio.model.FizzBuzzGameResponseEnum;
+import com.test.oneio.model.FizzBuzzGameResponseModel;
 import com.test.oneio.service.FizzBuzzInterface;
 
 import java.util.List;
@@ -10,22 +12,27 @@ import java.util.stream.IntStream;
 
 import org.springframework.stereotype.Service;
 
+/*
+ * FizzBuzzService is the service class for FizzBuzz game, where actual game 
+ * logic is implemented. It also leverages the pagination logic.
+ */
 @Service
 public class FizzBuzzService implements FizzBuzzInterface
 {       
-    // TODO: add pagination
     @Override
-    public List<String> playGame(int start, int end) throws RuntimeException {
-        if (start < 1 || end < 1 || start > end || end > Integer.MAX_VALUE || ((end - start) > 100)) {
-            throw new IllegalArgumentException("Invalid input!");
+    public FizzBuzzGameResponseModel playGame(final int start, final int size) throws GameException {
+        if (start < 1 || start > Integer.MAX_VALUE || size < 0 || size > Integer.MAX_VALUE) {
+            throw new GameException("Invalid input value!");
         }
-        return IntStream.rangeClosed(start, end)
-                .parallel()
+        List<String> response = IntStream.rangeClosed(start, start+size)
                 .mapToObj(this::fizzBuzzGame)
                 .collect(Collectors.toList());
+        
+        return new FizzBuzzGameResponseModel(response);
     }
 
-    private String fizzBuzzGame(int num) {
+
+    private String fizzBuzzGame(final int num) {
 
         boolean fizzDivisible = num % FizzBuzzGameModel.FIZZ_NUMBER == 0;
         boolean buzzDivisible = num % FizzBuzzGameModel.BUZZ_NUMBER == 0;

@@ -1,48 +1,82 @@
 package com.test.oneio.service;
 
+import com.test.oneio.Exception.GameException;
+import com.test.oneio.model.FizzBuzzGameResponseModel;
 import com.test.oneio.service.Impl.FizzBuzzService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Arrays;
-import java.util.List;
 
-
+/*
+ * FizzBuzzServiceTest is the test class for FizzBuzzService and the game logic. 
+ */
 public class FizzBuzzServiceTest {
 
     private FizzBuzzService fizzBuzzService;
+    
     @BeforeEach
     public void setUp() {
         fizzBuzzService = new FizzBuzzService();
     }
 
     @Test
-    void testFizzBuzzService() {
-        List<String> res = fizzBuzzService.playGame(2,2);
-        assert res.size() == 1;
-        assert res.get(0).equals("2");
+    void testFizzBuzzServiceWithNoSize() {
+        FizzBuzzGameResponseModel res = fizzBuzzService.playGame(1,0);
+        assert res.getItems().size() == 1;
+        assert res.getItems().get(0).equals("1");
     }
 
     @Test
-    void testFizzBuzzService2() {
-        List<String> res = fizzBuzzService.playGame(1,3);
-        assert res.size() == 3;
-        assert res.equals(Arrays.asList( "1", "2", "Fizz"));
+    void testFizzBuzzServiceWithSize1() {
+        FizzBuzzGameResponseModel res = fizzBuzzService.playGame(1,1);
+        assert res.getItems().size() == 2;
+        assert res.getItems().equals(Arrays.asList( "1", "2"));
     }
 
     @Test
-    void testFizzBuzzService3() {
-        List<String> res = fizzBuzzService.playGame(1,5);
-        assert res.size() == 5;
-        assert res.equals(Arrays.asList( "1", "2", "Fizz", "4", "Buzz"));
+    void testFizzBuzzServiceWithSize4() {
+        FizzBuzzGameResponseModel res = fizzBuzzService.playGame(1,4);
+        assert res.getItems().size() == 5;
+        assert res.getItems().equals(Arrays.asList( "1", "2", "Fizz", "4", "Buzz"));
     }
 
     @Test
-    void testFizzBuzzService4() {
-        List<String> res = fizzBuzzService.playGame(1,15);
-        assert res.size() == 15;
-        assert res.equals(Arrays.asList( "1", "2", "Fizz", "4", "Buzz", 
+    void testFizzBuzzServiceWithStartOtherThan1() {
+        FizzBuzzGameResponseModel res = fizzBuzzService.playGame(3,12);
+        assert res.getItems().size() == 13;
+        assert res.getItems().equals(Arrays.asList( "Fizz", "4", "Buzz", 
             "Fizz", "7", "8", "Fizz", "Buzz", "11", "Fizz", "13", "14", "FizzBuzz"));
     }
 
+    @Test
+    void testFizzBuzzServiceForLargeSize() {
+        FizzBuzzGameResponseModel res = fizzBuzzService.playGame(1,1000000);
+        assert res.getItems().size() == 1000001;
+    }
+
+    /*
+     * Service layer should throw exception if start value is less than 1. 
+     */
+    @Test
+    void testFizzBuzzServiceThrowsException() {
+        GameException thrown = assertThrows(GameException.class, () -> {
+            fizzBuzzService.playGame(0,0);
+        });
+        assertTrue(thrown.getMessage().equalsIgnoreCase("Invalid input value!"));
+    }
+
+    /*
+     * Service throws exception when start value is greater than Integer.MAX_VALUE 
+     */
+    @Test
+    void testFizzBuzzServiceThrowsException2() {
+        GameException thrown = assertThrows(GameException.class, () -> {
+            fizzBuzzService.playGame(Integer.MAX_VALUE+1,0);
+        });
+        assertTrue(thrown.getMessage().equalsIgnoreCase("Invalid input value!"));
+    }
 }
