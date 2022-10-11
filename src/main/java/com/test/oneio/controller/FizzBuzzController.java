@@ -24,7 +24,6 @@ public class FizzBuzzController {
     public ResponseEntity<?> playFizzBuzzGame(
         @RequestParam(required = true) int start, @RequestParam(defaultValue = "0") int size) {
         log.info("Fizzbuzz game start!");
-        log.debug("Start: " + start + ", size: " + size);
         return ResponseEntity.ok(fizzBuzzService.playGame(start, size));
     }
 }
