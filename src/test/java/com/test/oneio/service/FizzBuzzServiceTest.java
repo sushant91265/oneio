@@ -3,6 +3,7 @@ package com.test.oneio.service;
 import com.test.oneio.Exception.GameException;
 import com.test.oneio.model.FizzBuzzGameResponseModel;
 import com.test.oneio.service.Impl.FizzBuzzService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,10 +18,10 @@ import java.util.Arrays;
 public class FizzBuzzServiceTest {
 
     private FizzBuzzService fizzBuzzService;
-    
+
     @BeforeEach
     public void setUp() {
-        fizzBuzzService = new FizzBuzzService();
+        fizzBuzzService = new FizzBuzzService(10000000);
     }
 
     @Test

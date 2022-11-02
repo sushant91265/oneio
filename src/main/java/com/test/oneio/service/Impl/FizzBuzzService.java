@@ -23,8 +23,12 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class FizzBuzzService implements FizzBuzzInterface
 {   
-    @Value("${fizzbuzz.max.value}")
+
     private int maxFizzBuzzValue;
+
+    public FizzBuzzService(@Value("${fizzbuzz.max.value}") int maxFizzBuzzValue) {    
+        this.maxFizzBuzzValue = maxFizzBuzzValue;
+    }
 
     @Override
     public FizzBuzzGameResponseModel playGame(final int start, final int size) throws GameException {
