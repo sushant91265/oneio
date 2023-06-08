@@ -1,0 +1,109 @@
+package fi.op.rest.nostro.controller;
+
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import fi.op.rest.nostro.data.models.NostroInput;
+import fi.op.rest.nostro.data.models.NostroResponse;
+import fi.op.rest.nostro.manager.NostroManager;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
+@CrossOrigin
+@RestController
+@RequestMapping("nostroservice")
+public class NostroController {
+
+    private static final Logger LOG = LoggerFactory.getLogger(NostroController.class);
+
+    @Autowired
+    private NostroManager nostroManager;
+
+    /* ----- v1 ------------------------------------------- */
+    @GetMapping(value = "/v1/test", produces = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity<String> getTest() {
+        return new ResponseEntity<String>("Test call OK!", HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v1/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Creates a nostro trade.", description = "Create Nostro trade", operationId = "saveNostro", deprecated=true, responses = {
+			@ApiResponse(responseCode = "201", description = "Trade successfully created", content = @Content(schema = @Schema(implementation = NostroResponse.class))),
+
+            @ApiResponse(responseCode = "400", description = "Bad request", content = @Content(schema = @Schema(implementation = NostroResponse.class), examples = {
+                    @ExampleObject(name = "4001", description = "Invalid Amount, valid format as example", value = "123456.78"),
+                    @ExampleObject(name = "4002", description = "Invalid Value Date, valid format as example", value = "ddMMyyyy"),
+                    @ExampleObject(name = "4003", description = "Invalid Posting Date, valid format as example", value = "ddMMyyyy"),
+                    @ExampleObject(name = "4004", description = "Invalid ReceivePay, valid format as example", value = "PAY = 1, RECEIVE = 2"),
+                    @ExampleObject(name = "4005", description = "Invalid AppId, valid format as example", value = "ULT"),
+                    @ExampleObject(name = "4006", description = "Invalid BankRefNumber, valid format as example", value = "TMM05539219"),
+                    @ExampleObject(name = "4007", description = "Invalid ExtRefNumber, valid format as example", value = "MMB092310644460"),
+                    @ExampleObject(name = "4008", description = "Invalid NostroAccNumber, valid format as example", value = "121104889013000"),
+                    @ExampleObject(name = "4009", description = "Invalid Currency, valid format as example", value = "USD"),
+                    @ExampleObject(name = "4010", description = "Invalid Eurorate, valid format as example", value = "1.531"),
+                    @ExampleObject(name = "4012", description = "Invalid RequestId"),
+                    @ExampleObject(name = "4013", description = "AccountId not found in Calypso"),
+                    @ExampleObject(name = "4014", description = "Currency doesn't match the account currency"),
+                    @ExampleObject(name = "4015", description = "Account is closed") })),
+
+            @ApiResponse(responseCode = "409", description = "Duplicate request", content = @Content(schema = @Schema(implementation = NostroResponse.class), examples = {
+                    @ExampleObject(name = "4011", description = "RequestId already exists in Calypso") })),
+
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(schema = @Schema(implementation = NostroResponse.class), examples = {
+                    @ExampleObject(name = "5001", description = "Nostro book not setup in calypso", value = "Contact Calypso team"),
+                    @ExampleObject(name = "5002", description = "Book Attribute Value is Blank For Account", value = "Contact Calypso team"),
+                    @ExampleObject(name = "5004", description = "Save to Calypso failed", value = "Contact Calypso team") })),
+
+			@ApiResponse(responseCode = "503", description = "Calypso error, please retry later", content = @Content(schema = @Schema(implementation = NostroResponse.class), examples = {
+					@ExampleObject(name = "5003", description = "Couldn't retrieve Calypso connection", value = "Try again later") }))
+    })
+    public ResponseEntity<NostroResponse> createNew(@Parameter(name = "nostroData", required = true) @RequestBody NostroInput nostroData) {
+        NostroResponse response = nostroManager.processNostroTrade(nostroData);
+
+        if (response.getErrorCodes().contains(5003)) {
+            LOG.error("End of create new. Response : " + HttpStatus.SERVICE_UNAVAILABLE.value() + getErrorsString(response));
+            return new ResponseEntity<NostroResponse>(response, HttpStatus.SERVICE_UNAVAILABLE);
+        } else if (response.getErrorCodes().contains(4011)) {
+            LOG.error("End of create new. Response : " + HttpStatus.CONFLICT.value() + getErrorsString(response));
+            return new ResponseEntity<NostroResponse>(response, HttpStatus.CONFLICT);
+        } else if (checkErrorCodes(response.getErrorCodes(), 5000)) {
+            LOG.error("End of create new. Response : " + HttpStatus.INTERNAL_SERVER_ERROR.value() + getErrorsString(response));
+            return new ResponseEntity<NostroResponse>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        } else if (checkErrorCodes(response.getErrorCodes(), 4000)) {
+            LOG.error("End of create new. Response : " + HttpStatus.BAD_REQUEST.value() + getErrorsString(response));
+            return new ResponseEntity<NostroResponse>(response, HttpStatus.BAD_REQUEST);
+        } else {
+            LOG.info("Trade saved succesfully with trade id " + response.getTradeId());
+            return new ResponseEntity<NostroResponse>(response, HttpStatus.CREATED);
+        }
+    }
+
+    private boolean checkErrorCodes(List<Integer> errors, int checkedCode) {
+        int max = checkedCode + 1000;
+        for (int code : errors) {
+            if (code >= checkedCode && code < max) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String getErrorsString(NostroResponse response) {
+        return " errors " + response.getErrors() + " codes " + response.getErrorCodes();
+    }
+}
